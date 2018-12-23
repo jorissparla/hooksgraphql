@@ -1,7 +1,19 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { request } from "graphql-request";
 
 import "./App.css";
+const url = "http://nlbavwixs.infor.com:4000";
+
+const peopleQuery = `
+{
+  courses {
+    id
+    title
+  }
+}
+
+`;
 
 const useInput = defaultValue => {
   const [input, setInput] = useState(defaultValue);
@@ -10,14 +22,14 @@ const useInput = defaultValue => {
 export default function App() {
   const [results, setResults] = useState([]);
   const search = useInput("reacthooks");
-  const [query, setQuery] = useState("reacthooks");
-  async function useHackernewsAPI() {
-    const response = await axios.get(`http://hn.algolia.com/api/v1/search?query=${query}`);
-    setResults(response.data.hits);
+  const [query, setQuery] = useState("");
+  async function dashboardAPI() {
+    const response = await request(url, peopleQuery);
+    setResults(response.courses.filter(course => course.title.includes(query)));
     console.log(response);
   }
   useEffect(() => {
-    useHackernewsAPI();
+    dashboardAPI();
     //.then(response => setResults(response.data.hits));
     return () => null;
   }, []);
@@ -26,7 +38,7 @@ export default function App() {
       <form
         onSubmit={event => {
           event.preventDefault();
-          useHackernewsAPI();
+          dashboardAPI();
         }}
       >
         <input
@@ -35,7 +47,7 @@ export default function App() {
           value={query}
           onChange={({ target: { value } }) => setQuery(value)}
         />
-        <button type="submit" onClick={() => useHackernewsAPI()}>
+        <button type="submit" onClick={() => dashboardAPI()}>
           Search
         </button>
       </form>
