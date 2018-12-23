@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { request } from "graphql-request";
 
@@ -23,9 +23,13 @@ export default function App() {
   const [results, setResults] = useState([]);
   const search = useInput("reacthooks");
   const [query, setQuery] = useState("");
+  const [loading, setLoading] = useState(false);
+  const searchInputRef = useRef();
   async function dashboardAPI() {
+    setLoading(true);
     const response = await request(url, peopleQuery);
     setResults(response.courses.filter(course => course.title.includes(query)));
+    setLoading(false);
     console.log(response);
   }
   useEffect(() => {
@@ -33,6 +37,44 @@ export default function App() {
     //.then(response => setResults(response.data.hits));
     return () => null;
   }, []);
+
+  let content = (
+    <div>
+      <form
+        onSubmit={event => {
+          event.preventDefault();
+          dashboardAPI();
+        }}
+      >
+        <input
+          type="text"
+          placeholder="Search text"
+          value={query}
+          onChange={({ target: { value } }) => setQuery(value)}
+          ref={searchInputRef}
+        />
+        <button type="submit" onClick={() => dashboardAPI()}>
+          Search
+        </button>
+        <button
+          onClick={() => {
+            setQuery("");
+            searchInputRef.current.focus();
+          }}
+        >
+          Clear
+        </button>
+      </form>
+      <ul>
+        {results.map(result => (
+          <li key={result.id}>
+            <a href={result.url}>{result.title}</a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+
   return (
     <div>
       <form
@@ -46,18 +88,31 @@ export default function App() {
           placeholder="Search text"
           value={query}
           onChange={({ target: { value } }) => setQuery(value)}
+          ref={searchInputRef}
         />
         <button type="submit" onClick={() => dashboardAPI()}>
           Search
         </button>
+        <button
+          onClick={() => {
+            setQuery("");
+            searchInputRef.current.focus();
+          }}
+        >
+          Clear
+        </button>
       </form>
-      <ul>
-        {results.map(result => (
-          <li key={result.objectID}>
-            <a href={result.url}>{result.title}</a>
-          </li>
-        ))}
-      </ul>
+      {loading ? (
+        <div>Loading </div>
+      ) : (
+        <ul>
+          {results.map(result => (
+            <li key={result.id}>
+              <a href={result.url}>{result.title}</a>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
